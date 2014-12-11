@@ -5,36 +5,38 @@ require 'rack/streaming_proxy/request'
 require 'rack/streaming_proxy/response'
 
 class Rack::StreamingProxy::Proxy
-
   class << self
-    attr_accessor :logger, :log_verbosity, :num_retries_on_5xx, :raise_on_5xx
+    # Logs to stdout by default unless configured with another logger via Railtie.
+    def logger
+      Logger.new(STDOUT)
+    end
 
-    def set_default_configuration
-      # Logs to stdout by default unless configured with another logger via Railtie.
-      @logger ||= Logger.new(STDOUT)
+    # At :low verbosity by default -- will not output :debug level messages.
+    # :high verbosity outputs :debug level messages.
+    # This is independent of the Logger's log_level, as set in Rails, for example,
+    # although the Logger's level can override this setting.
+    def log_verbosity
+      :low
+    end
 
-      # At :low verbosity by default -- will not output :debug level messages.
-      # :high verbosity outputs :debug level messages.
-      # This is independent of the Logger's log_level, as set in Rails, for example,
-      # although the Logger's level can override this setting.
-      @log_verbosity ||= :low
+    # No retries are performed by default.
+    def num_retries_on_5xx
+      0
+    end
 
-      # No retries are performed by default.
-      @num_retries_on_5xx ||= 0
-
-      # If the proxy cannot recover from 5xx's through retries (see num_retries_on_5xx),
-      # then it by default passes through the content from the destination
-      # e.g. the Apache error page. If you want an exception to be raised instead so
-      # you can handle it yourself (i.e. display your own error page), set raise_on_5xx to true.
-      @raise_on_5xx ||= false
+    # If the proxy cannot recover from 5xx's through retries (see num_retries_on_5xx),
+    # then it by default passes through the content from the destination
+    # e.g. the Apache error page. If you want an exception to be raised instead so
+    # you can handle it yourself (i.e. display your own error page), set raise_on_5xx to true.
+    def raise_on_5xx
+      false
     end
 
     def log(level, message)
       unless log_verbosity == :low && level == :debug
-        @logger.send level, "[Rack::StreamingProxy] #{message}"
+        logger.send level, "[Rack::StreamingProxy] #{message}"
       end
     end
-
   end
 
   # The block provided to the initializer is given a Rack::Request
@@ -54,16 +56,16 @@ class Rack::StreamingProxy::Proxy
   # Most headers, request body, and HTTP method are preserved.
   #
   def initialize(app, &block)
-    self.class.set_default_configuration
     @app   = app
     @block = block
   end
 
   def call(env)
     current_request = Rack::Request.new(env)
+    destination_uri = destination_uri(current_request)
 
     # Decide whether this request should be proxied.
-    if destination_uri = @block.call(current_request)
+    if destination_uri
       self.class.log :info, "Starting proxy request to: #{destination_uri}"
 
       request  = Rack::StreamingProxy::Request.new(destination_uri, current_request)
@@ -104,7 +106,10 @@ class Rack::StreamingProxy::Proxy
     end
   end
 
-private
+  private
+  def destination_uri(rack_request)
+    nil
+  end
 
   def log_rack_error(env, e)
     env['rack.errors'].puts e.message
