@@ -22,6 +22,10 @@ class Rack::StreamingProxy::Request
     @destination_uri.is_a? URI::HTTPS
   end
 
+  def use_basic_auth?
+    @destination_uri.user && @destination_uri.password
+  end
+
   def uri
     @destination_uri.to_s
   end
@@ -48,6 +52,10 @@ private
       request[fixed_name] = value unless fixed_name.downcase == 'host'
     end
     request['X-Forwarded-For'] = (current_request.env['X-Forwarded-For'].to_s.split(/, +/) + [current_request.env['REMOTE_ADDR']]).join(', ')
+
+    if use_basic_auth?
+      request.basic_auth @destination_uri.user, @destination_uri.password
+    end
 
     log_headers :debug, 'Proxy Request Headers:', request
 
