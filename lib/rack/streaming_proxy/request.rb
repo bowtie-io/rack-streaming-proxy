@@ -3,10 +3,11 @@ require 'net/https'
 
 class Rack::StreamingProxy::Request
 
-  attr_reader :http_request
+  attr_reader :http_request, :rack_request
 
   def initialize(destination_uri, current_request)
     @destination_uri = URI.parse(destination_uri)
+    @rack_request    = current_request
     @http_request    = translate_request(current_request, @destination_uri)
   end
 
@@ -52,6 +53,12 @@ private
       request[fixed_name] = value unless fixed_name.downcase == 'host'
     end
     request['X-Forwarded-For'] = (current_request.env['X-Forwarded-For'].to_s.split(/, +/) + [current_request.env['REMOTE_ADDR']]).join(', ')
+
+    if rack_request.env[:'proxy_addon_headers']
+      rack_request.env[:'proxy_addon_headers'].each do |k,v|
+        request[k] = v
+      end
+    end
 
     if use_basic_auth?
       request.basic_auth @destination_uri.user, @destination_uri.password
