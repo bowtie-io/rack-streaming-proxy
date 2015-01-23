@@ -4,13 +4,13 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'rack/streaming_proxy/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'rack-streaming-proxy'
+  spec.name          = 'bowtie-io-rack-streaming-proxy'
   spec.version       = Rack::StreamingProxy::VERSION
-  spec.authors       = ['Fred Ngo', 'Nathan Witmer', 'Naotoshi Seo']
-  spec.email         = ['fredngo@gmail.com', 'nwitmer@gmail.com', 'sonots@gmail.com']
+  spec.authors       = ['Fred Ngo', 'Nathan Witmer', 'Naotoshi Seo', 'James Kassemi']
+  spec.email         = ['fredngo@gmail.com', 'nwitmer@gmail.com', 'sonots@gmail.com', 'jkassemi@gmail.com']
   spec.description   = %q{Streaming proxy for Rack, the rainbows to Rack::Proxy's unicorn.}
   spec.summary       = %q{Streaming proxy for Rack, the rainbows to Rack::Proxy's unicorn.}
-  spec.homepage      = 'http://github.com/zerowidth/rack-streaming-proxy'
+  spec.homepage      = 'http://github.com/bowtie-io/rack-streaming-proxy'
   spec.license       = 'MIT'
 
   spec.files         = `git ls-files`.split($/)
