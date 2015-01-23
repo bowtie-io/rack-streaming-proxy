@@ -100,7 +100,7 @@ private
     # Watch out: response.to_hash and response.each_header returns in different formats!
     # to_hash requires the values to be joined with a comma.
     headers = {}
-    response.each_header { |key, value| headers[key] = value }
+    response.to_hash.each { |key, value| headers[key] = value.join("\n") }
     log_headers :debug, 'Proxy Response Headers:', headers
     @piper.puts headers
 
